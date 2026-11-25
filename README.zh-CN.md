@@ -2,6 +2,8 @@
 
 # agy-skill-router
 
+[![npm version](https://img.shields.io/npm/v/agy-skill-router)](https://www.npmjs.com/package/agy-skill-router)
+
 **为 Antigravity 打造的低上下文消耗技能自主路由、0-token 推荐、过时技能体检与极简 MCP 发现插件。**
 
 ## 为什么做这个项目？
@@ -26,28 +28,33 @@
 
 ---
 
-## 一键让 Antigravity 自动部署（复制即用）
+## 快速安装（Quick Start）
 
-在任意设备（Windows / macOS / Linux，需已安装 **Git** 与 **Node.js >= 18**）把下面这段话直接发给 Antigravity：
+### 方式 1：`npx` 一行安装（最快，无需 clone）
+
+```bash
+npx -y agy-skill-router install --lang zh   # 中文提示
+npx -y agy-skill-router install             # 默认英文
+```
+
+*（默认只启用 `PreInvocation` 路由钩子，不对 `read_file` 挂同步钩子，高频并发读文件 0 额外延迟；如需开启 `read_file` 采纳率统计，可加 `--with-post-hook`。）*
+
+### 方式 2：一键让 Antigravity 自动部署（复制即用）
+
+在任意设备（Windows / macOS / Linux，需已安装 **Node.js >= 18**）把下面这段话直接发给 Antigravity：
 
 ```text
 请帮我安装并配置 https://github.com/chihenho/agy-skill-router ：
-按仓库里的 INSTALL_FOR_AGENTS.md 执行——克隆到 ~/.gemini/antigravity/scratch/agy-skill-router，运行 `node install.mjs --lang zh` 安装并自动扫描匹配我本地所有 skill，然后运行 `doctor` 和 `audit` 检查健康状态，并通过 GetAllPlugins RPC（过滤输出）确认 hooks 和 MCP 已激活，最后给我 `[agy-skill-router](customization://agy-skill-router)` 链接与体检摘要。
+运行 `npx -y agy-skill-router install --lang zh` 自动安装并扫描匹配我本地所有 skill，接着运行 `npx -y agy-skill-router doctor` 和 `npx -y agy-skill-router audit` 检查健康状态，并通过 GetAllPlugins RPC（过滤输出）确认 hooks 和 MCP 已激活，最后给我 `[agy-skill-router](customization://agy-skill-router)` 链接与体检摘要。
 ```
 
-*(如果想用英文界面提示，把 `--lang zh` 去掉直接跑 `node install.mjs` 即可。)*
-
-### 通过 Antigravity CLI、`npx` 或源码安装
+### 方式 3：Antigravity CLI 或 GitHub 源码安装
 
 ```bash
-# 方式 A：Antigravity CLI 直接安装
+# Antigravity CLI 直接安装
 agy plugin install https://github.com/chihenho/agy-skill-router
 
-# 方式 B：通过 npx 一键安装（发布到 npm 后可用）
-npx agy-skill-router install --lang zh   # 中文提示
-npx agy-skill-router install             # 默认英文
-
-# 方式 C：从 GitHub 源码安装
+# 或从 GitHub 源码安装
 git clone https://github.com/chihenho/agy-skill-router.git
 cd agy-skill-router
 node install.mjs --lang zh

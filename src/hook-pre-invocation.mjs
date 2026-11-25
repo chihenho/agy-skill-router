@@ -11,15 +11,23 @@ import {
   recordRoute,
 } from "./state.mjs";
 
-function readStdin() {
+function readStdin(timeoutMs = 2000) {
   return new Promise((resolve) => {
     let data = "";
+    let settled = false;
+    const finish = (val) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(val);
+    };
+    const timer = setTimeout(() => finish(data), timeoutMs);
     process.stdin.setEncoding("utf8");
     process.stdin.on("data", (chunk) => {
       data += chunk;
     });
-    process.stdin.on("end", () => resolve(data));
-    process.stdin.on("error", () => resolve(""));
+    process.stdin.on("end", () => finish(data));
+    process.stdin.on("error", () => finish(""));
   });
 }
 
@@ -41,11 +49,12 @@ function formatCautionInline(item, lang) {
 }
 
 export function buildPreInvocationResponse(payload, { config, dataDir, forceIndex = false } = {}) {
-  const input = String(payload?.lastUserInput || "");
-  if (isChitChat(input)) return {};
+  const rawInput = String(payload?.lastUserInput || "");
+  if (isChitChat(rawInput)) return {};
 
+  const input = rawInput.slice(0, 600);
   const conversationId = String(payload?.conversationId || "");
-  const inputHash = hashInput(input);
+  const inputHash = hashInput(rawInput);
   if (conversationId && hasRoutedInput(dataDir, conversationId, inputHash)) {
     return {};
   }

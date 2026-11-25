@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const MAX_CONVERSATIONS = 100;
@@ -14,10 +14,16 @@ function readJsonSafe(filePath, fallback) {
 }
 
 function writeJsonSafe(filePath, data) {
+  const tmpPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
   try {
-    writeFileSync(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+    writeFileSync(tmpPath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+    renameSync(tmpPath, filePath);
   } catch {
-    // Non-fatal in hook execution
+    try {
+      rmSync(tmpPath, { force: true });
+    } catch {
+      // Ignore cleanup error
+    }
   }
 }
 

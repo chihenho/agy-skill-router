@@ -2,6 +2,8 @@ English | [简体中文](./README.zh-CN.md)
 
 # agy-skill-router
 
+[![npm version](https://img.shields.io/npm/v/agy-skill-router)](https://www.npmjs.com/package/agy-skill-router)
+
 **Low-context autonomous skill routing, 0-token UI recommendations, skill staleness/health auditing, and minimal MCP discovery for Antigravity.**
 
 ## Why?
@@ -23,28 +25,33 @@ Antigravity injects every installed skill's `name` and `description` into every 
 
 ---
 
-## 1-Paste Install in Antigravity
+## Quick Start
 
-Paste this directly into Antigravity on any machine (Windows / macOS / Linux, requires **Git** and **Node.js >= 18**):
+### Option 1: Install via `npx` (Fastest)
+
+```bash
+npx -y agy-skill-router install           # English (default)
+npx -y agy-skill-router install --lang zh # Chinese UI hints
+```
+
+*(Pass `--with-post-hook` only if you also want synchronous `PostToolUse` `read_file` adoption tracking; default skips `read_file` hooks so parallel file reads add zero latency.)*
+
+### Option 2: 1-Paste Prompt in Antigravity
+
+Paste this directly into Antigravity on any machine (Windows / macOS / Linux, requires **Node.js >= 18**):
 
 ```text
 Please install https://github.com/chihenho/agy-skill-router into my Antigravity:
-Follow INSTALL_FOR_AGENTS.md in the repo — clone to ~/.gemini/antigravity/scratch/agy-skill-router, run `node install.mjs`, run `doctor` and `audit`, verify via GetAllPlugins RPC (filtered) that hooks and MCP are active, and give me the [agy-skill-router](customization://agy-skill-router) link.
+Run `npx -y agy-skill-router install`, then run `npx -y agy-skill-router doctor` and `npx -y agy-skill-router audit`, verify via GetAllPlugins RPC (filtered) that hooks and MCP are active, and give me the [agy-skill-router](customization://agy-skill-router) link.
 ```
 
-*(Prefer Chinese UI recommendations and plugin description? Replace `node install.mjs` with `node install.mjs --lang zh`.)*
-
-### Install via Antigravity CLI, `npx`, or Git
+### Option 3: Antigravity CLI or Git Source
 
 ```bash
-# Option A: Direct install via Antigravity CLI
+# Direct install via Antigravity CLI
 agy plugin install https://github.com/chihenho/agy-skill-router
 
-# Option B: Install via npx (once published on npm)
-npx agy-skill-router install        # English (default)
-npx agy-skill-router install --lang zh
-
-# Option C: From GitHub source
+# Or from GitHub source
 git clone https://github.com/chihenho/agy-skill-router.git
 cd agy-skill-router
 node install.mjs

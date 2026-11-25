@@ -7,19 +7,5 @@
         "timeout": 10
       }
     ]
-  },
-  "agy-skill-router-post": {
-    "PostToolUse": [
-      {
-        "matcher": "read_file",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ./src/hook-post-tool.mjs",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
   }
 }

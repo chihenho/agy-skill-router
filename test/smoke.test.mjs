@@ -357,6 +357,7 @@ test("distribution manifests and bin CLI wrapper are valid and portable", () => 
 
   assert.equal(pkg.version, plugin.version);
   assert.ok(hooks["agy-skill-router-pre"]?.PreInvocation?.length > 0);
+  assert.equal(hooks["agy-skill-router-post"], undefined);
   assert.ok(mcp.mcpServers?.router?.args?.includes("./src/mcp-server.mjs"));
   assert.ok(glama.maintainers.includes("chihenho"));
   assert.ok(smithery.includes("type: stdio"));
@@ -368,4 +369,26 @@ test("distribution manifests and bin CLI wrapper are valid and portable", () => 
   });
   assert.equal(helpRes.status, 0);
   assert.ok(helpRes.stdout.includes("agy-skill-router install"));
+
+  // Verify huge pasted input routes cleanly without error or slowdown
+  const fx = createFixture();
+  try {
+    loadOrBuildIndex({ config: fx.config, dataDir: fx.dataDir, force: true });
+    const hugeRes = spawnSync("node", [join(REPO_ROOT, "src", "hook-pre-invocation.mjs")], {
+      input: JSON.stringify({
+        conversationId: "huge-1",
+        lastUserInput: "ok " + "x".repeat(5000),
+      }),
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AGY_ROUTER_ROOT: fx.pluginRoot,
+        AGY_ROUTER_DATA: fx.dataDir,
+      },
+    });
+    assert.equal(hugeRes.status, 0);
+    assert.deepEqual(JSON.parse(hugeRes.stdout), {});
+  } finally {
+    rmSync(fx.root, { recursive: true, force: true });
+  }
 });

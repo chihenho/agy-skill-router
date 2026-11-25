@@ -24,6 +24,7 @@ function parseArgs(argv) {
     lang: null,
     target: DEFAULT_TARGET,
     noMcp: false,
+    withPostHook: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -37,12 +38,15 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg === "--no-mcp") {
       opts.noMcp = true;
+    } else if (arg === "--with-post-hook") {
+      opts.withPostHook = true;
     } else if (arg === "-h" || arg === "--help") {
       console.log(
-        "Usage: node install.mjs [--lang <en|zh>] [--target <path>] [--no-mcp]\n" +
+        "Usage: node install.mjs [--lang <en|zh>] [--target <path>] [--no-mcp] [--with-post-hook]\n" +
           "  --lang <en|zh>   Plugin & UI recommendation language (default: en)\n" +
           "  --target <path>  Override plugin install path (default: ~/.gemini/config/plugins/agy-skill-router)\n" +
-          "  --no-mcp         Install hooks only without registering the minimal MCP server"
+          "  --no-mcp         Install hooks only without registering the minimal MCP server\n" +
+          "  --with-post-hook Also register synchronous PostToolUse read_file adoption hook"
       );
       process.exit(0);
     } else {
@@ -119,7 +123,7 @@ function main() {
       ? {
           name: "agy-skill-router",
           displayName: "技能智能路由 (agy-skill-router)",
-          version: "0.2.0",
+          version: "0.2.1",
           description:
             "低上下文消耗的 Antigravity 技能自主路由、0-token UI 推荐、过时技能体检与极简 MCP 检索插件。",
           logo: "assets/logo.svg",
@@ -135,7 +139,7 @@ function main() {
       : {
           name: "agy-skill-router",
           displayName: "Skill Router (agy-skill-router)",
-          version: "0.2.0",
+          version: "0.2.1",
           description:
             "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
           logo: "assets/logo.svg",
@@ -165,7 +169,9 @@ function main() {
         },
       ],
     },
-    "agy-skill-router-post": {
+  };
+  if (opts.withPostHook) {
+    hooksJson["agy-skill-router-post"] = {
       PostToolUse: [
         {
           matcher: "read_file",
@@ -178,8 +184,8 @@ function main() {
           ],
         },
       ],
-    },
-  };
+    };
+  }
   writeFileSync(
     join(target, "hooks.json"),
     `${JSON.stringify(hooksJson, null, 2)}\n`,
