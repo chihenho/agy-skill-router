@@ -27,6 +27,7 @@
     "pyproject.toml": ["python"]
   },
   "excludeSkills": [
-    "agy-skill-router"
+    "agy-skill-router",
+    "skill-router"
   ]
 }

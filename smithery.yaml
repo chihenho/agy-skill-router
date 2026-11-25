@@ -1,0 +1,20 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      routerRoot:
+        type: string
+        description: Optional path to an existing agy-skill-router plugin directory
+      dataDir:
+        type: string
+        description: Optional persistent data directory for index and health stats
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['./src/mcp-server.mjs'],
+      env: {
+        ...(config.routerRoot ? { AGY_ROUTER_ROOT: config.routerRoot } : {}),
+        ...(config.dataDir ? { AGY_ROUTER_DATA: config.dataDir } : {})
+      }
+    })

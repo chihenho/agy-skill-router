@@ -34,14 +34,26 @@ Follow INSTALL_FOR_AGENTS.md in the repo — clone to ~/.gemini/antigravity/scra
 
 *(Prefer Chinese UI recommendations and plugin description? Replace `node install.mjs` with `node install.mjs --lang zh`.)*
 
-### Manual CLI Install
+### Install via Antigravity CLI, `npx`, or Git
 
 ```bash
+# Option A: Direct install via Antigravity CLI
+agy plugin install https://github.com/chihenho/agy-skill-router
+
+# Option B: Install via npx (once published on npm)
+npx agy-skill-router install        # English (default)
+npx agy-skill-router install --lang zh
+
+# Option C: From GitHub source
 git clone https://github.com/chihenho/agy-skill-router.git
 cd agy-skill-router
-node install.mjs          # English (default)
-# or: node install.mjs --lang zh
+node install.mjs
 ```
+
+### Companion Skill & Registry Compatibility
+
+- Includes [`skills/skill-router/SKILL.md`](./skills/skill-router/SKILL.md) (`/skill-router`) for **skills.sh** / **SkillsMP** / **Antigravity Marketplace** discovery.
+- Includes [`plugin.json`](./plugin.json), [`hooks.json`](./hooks.json), [`mcp_config.json`](./mcp_config.json), [`smithery.yaml`](./smithery.yaml), and [`glama.json`](./glama.json) for **Antigravity Plugin Marketplace**, **Smithery**, and **Glama** MCP indexing (`npx -y agy-skill-router mcp`).
 
 ---
 

@@ -37,13 +37,27 @@
 
 *(如果想用英文界面提示，把 `--lang zh` 去掉直接跑 `node install.mjs` 即可。)*
 
-### 手动安装
+### 通过 Antigravity CLI、`npx` 或源码安装
 
 ```bash
+# 方式 A：Antigravity CLI 直接安装
+agy plugin install https://github.com/chihenho/agy-skill-router
+
+# 方式 B：通过 npx 一键安装（发布到 npm 后可用）
+npx agy-skill-router install --lang zh   # 中文提示
+npx agy-skill-router install             # 默认英文
+
+# 方式 C：从 GitHub 源码安装
 git clone https://github.com/chihenho/agy-skill-router.git
 cd agy-skill-router
-node install.mjs --lang zh   # 中文提示（默认不加参数为英文 en）
+node install.mjs --lang zh
 ```
+
+### 分发与聚合目录支持
+
+- 根目录自带 [`plugin.json`](./plugin.json)、[`hooks.json`](./hooks.json)、[`mcp_config.json`](./mcp_config.json) 与 [`assets/logo.svg`](./assets/logo.svg)，可直接通过 `agy plugin validate --strict .` 校验并提交至 **Antigravity 官方插件市场**。
+- 自带 [`skills/skill-router/SKILL.md`](./skills/skill-router/SKILL.md)（`/skill-router`）以适配 **skills.sh** / **SkillsMP** 索引。
+- 自带 [`smithery.yaml`](./smithery.yaml) 与 [`glama.json`](./glama.json)，支持 **Smithery** / **Glama** / 标准 MCP 客户端通过 `npx -y agy-skill-router mcp` 拉起。
 
 ---
 

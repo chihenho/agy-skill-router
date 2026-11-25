@@ -71,9 +71,14 @@ function main() {
       if (existing.installedAutoThreshold === 0.86) {
         existing.installedAutoThreshold = baseConfig.installedAutoThreshold;
       }
+      const mergedExclude = new Set([
+        ...(Array.isArray(existing.excludeSkills) ? existing.excludeSkills : []),
+        ...(baseConfig.excludeSkills || []),
+      ]);
       finalConfig = {
         ...baseConfig,
         ...existing,
+        excludeSkills: [...mergedExclude],
         sources: Array.isArray(existing.sources) ? existing.sources : baseConfig.sources,
       };
     } catch {
@@ -87,6 +92,14 @@ function main() {
   mkdirSync(target, { recursive: true });
   rmSync(join(target, "src"), { recursive: true, force: true });
   cpSync(join(REPO_ROOT, "src"), join(target, "src"), { recursive: true });
+
+  for (const dirName of ["assets", "skills"]) {
+    const srcDir = join(REPO_ROOT, dirName);
+    if (existsSync(srcDir)) {
+      rmSync(join(target, dirName), { recursive: true, force: true });
+      cpSync(srcDir, join(target, dirName), { recursive: true });
+    }
+  }
 
   for (const docFile of ["README.md", "README.zh-CN.md", "LICENSE"]) {
     const srcDoc = join(REPO_ROOT, docFile);
@@ -106,10 +119,11 @@ function main() {
       ? {
           name: "agy-skill-router",
           displayName: "技能智能路由 (agy-skill-router)",
-          version: "0.1.1",
+          version: "0.2.0",
           description:
             "低上下文消耗的 Antigravity 技能自主路由、0-token UI 推荐、过时技能体检与极简 MCP 检索插件。",
-          author: { name: "chihenho" },
+          logo: "assets/logo.svg",
+          author: { name: "chihenho", url: "https://github.com/chihenho" },
           homepage: "https://github.com/chihenho/agy-skill-router",
           repository: "https://github.com/chihenho/agy-skill-router",
           suggestedPrompts: [
@@ -121,10 +135,11 @@ function main() {
       : {
           name: "agy-skill-router",
           displayName: "Skill Router (agy-skill-router)",
-          version: "0.1.1",
+          version: "0.2.0",
           description:
             "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
-          author: { name: "chihenho" },
+          logo: "assets/logo.svg",
+          author: { name: "chihenho", url: "https://github.com/chihenho" },
           homepage: "https://github.com/chihenho/agy-skill-router",
           repository: "https://github.com/chihenho/agy-skill-router",
           suggestedPrompts: [

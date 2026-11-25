@@ -1,0 +1,25 @@
+{
+  "agy-skill-router-pre": {
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "node ./src/hook-pre-invocation.mjs",
+        "timeout": 10
+      }
+    ]
+  },
+  "agy-skill-router-post": {
+    "PostToolUse": [
+      {
+        "matcher": "read_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./src/hook-post-tool.mjs",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

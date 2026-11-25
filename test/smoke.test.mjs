@@ -344,3 +344,28 @@ test("MCP server supports search_skills, list_skill_domains, and report_skill_is
     rmSync(fx.root, { recursive: true, force: true });
   }
 });
+
+test("distribution manifests and bin CLI wrapper are valid and portable", () => {
+  const pkg = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8"));
+  const plugin = JSON.parse(readFileSync(join(REPO_ROOT, "plugin.json"), "utf8"));
+  const hooks = JSON.parse(readFileSync(join(REPO_ROOT, "hooks.json"), "utf8"));
+  const mcp = JSON.parse(readFileSync(join(REPO_ROOT, "mcp_config.json"), "utf8"));
+  const glama = JSON.parse(readFileSync(join(REPO_ROOT, "glama.json"), "utf8"));
+  const smithery = readFileSync(join(REPO_ROOT, "smithery.yaml"), "utf8");
+  const logo = readFileSync(join(REPO_ROOT, "assets", "logo.svg"), "utf8");
+  const skill = readFileSync(join(REPO_ROOT, "skills", "skill-router", "SKILL.md"), "utf8");
+
+  assert.equal(pkg.version, plugin.version);
+  assert.ok(hooks["agy-skill-router-pre"]?.PreInvocation?.length > 0);
+  assert.ok(mcp.mcpServers?.router?.args?.includes("./src/mcp-server.mjs"));
+  assert.ok(glama.maintainers.includes("chihenho"));
+  assert.ok(smithery.includes("type: stdio"));
+  assert.ok(logo.includes("<svg"));
+  assert.ok(skill.includes("name: skill-router"));
+
+  const helpRes = spawnSync("node", [join(REPO_ROOT, "bin", "agy-skill-router.mjs"), "--help"], {
+    encoding: "utf8",
+  });
+  assert.equal(helpRes.status, 0);
+  assert.ok(helpRes.stdout.includes("agy-skill-router install"));
+});

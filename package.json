@@ -1,10 +1,48 @@
 {
   "name": "agy-skill-router",
-  "version": "0.1.1",
-  "description": "Low-context autonomous skill router, 0-token UI recommender, and minimal MCP discovery server for Antigravity.",
+  "version": "0.2.0",
+  "description": "Low-context autonomous skill router, 0-token UI recommender, staleness auditor, and minimal MCP discovery server for Antigravity.",
   "type": "module",
   "private": false,
   "license": "MIT",
+  "author": "chihenho",
+  "homepage": "https://github.com/chihenho/agy-skill-router#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chihenho/agy-skill-router.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chihenho/agy-skill-router/issues"
+  },
+  "keywords": [
+    "antigravity",
+    "agent-skills",
+    "skill-router",
+    "mcp",
+    "ai-agents",
+    "hooks",
+    "context-optimization"
+  ],
+  "bin": {
+    "agy-skill-router": "./bin/agy-skill-router.mjs"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "assets/",
+    "skills/",
+    "install.mjs",
+    "plugin.json",
+    "hooks.json",
+    "mcp_config.json",
+    "router.config.json",
+    "smithery.yaml",
+    "glama.json",
+    "README.md",
+    "README.zh-CN.md",
+    "INSTALL_FOR_AGENTS.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "node --test test/smoke.test.mjs",
     "install:plugin": "node install.mjs"

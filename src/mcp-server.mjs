@@ -199,7 +199,7 @@ function handleMessage(msg) {
         result: {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
-          serverInfo: { name: "agy-skill-router", version: "0.1.1" },
+          serverInfo: { name: "agy-skill-router", version: "0.2.0" },
         },
       };
     }
