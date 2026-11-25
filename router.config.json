@@ -1,0 +1,30 @@
+{
+  "lang": "en",
+  "autoThreshold": 0.62,
+  "recommendThreshold": 0.36,
+  "autoMax": 2,
+  "recommendMax": 3,
+  "indexTtlSeconds": 300,
+  "staleDays": 180,
+  "lowAdoptionMinExposures": 6,
+  "lowAdoptionMaxRate": 0.15,
+  "includeInstalledSkills": true,
+  "includePrinciples": false,
+  "sources": [
+    { "path": "~/.gemini/skill-vault", "kind": "vault" },
+    { "path": "~/.gemini/config/skills", "kind": "installed" },
+    { "skillsJson": "~/.gemini/config/skills.json", "kind": "installed" },
+    { "globPlugins": "~/.gemini/config/plugins", "subpath": "skills", "kind": "installed" },
+    { "globPlugins": "~/.gemini/config/plugins", "subpath": "references/extra-skills", "kind": "folded" }
+  ],
+  "workspaceSignals": {
+    "project.config.json": ["wechatide", "wechat", "miniprogram"],
+    "tsconfig.json": ["typescript", "ts"],
+    "package.json": ["frontend", "node", "ui"],
+    "Cargo.toml": ["rust"],
+    "pyproject.toml": ["python"]
+  },
+  "excludeSkills": [
+    "agy-skill-router"
+  ]
+}

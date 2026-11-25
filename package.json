@@ -1,0 +1,15 @@
+{
+  "name": "agy-skill-router",
+  "version": "0.1.0",
+  "description": "Low-context autonomous skill router, 0-token UI recommender, and minimal MCP discovery server for Antigravity.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/smoke.test.mjs",
+    "install:plugin": "node install.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
