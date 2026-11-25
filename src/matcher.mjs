@@ -80,6 +80,7 @@ export function matchSkills({
 
     let rawBm25 = 0;
     const matchedTerms = [];
+    const synonymHits = [];
 
     for (const [term, qWeight] of terms.entries()) {
       const df = docFreq[term] || 0;
@@ -91,7 +92,11 @@ export function matchSkills({
       if (weightedTf > 0) {
         const s = bm25TermScore(weightedTf, df, totalDocs, skill.docLen || 10, avgDocLen) * qWeight;
         rawBm25 += s;
-        if (qWeight >= 1.0) matchedTerms.push(term);
+        if (qWeight >= 1.0) {
+          matchedTerms.push(term);
+        } else {
+          synonymHits.push(term);
+        }
       }
     }
 
@@ -100,17 +105,23 @@ export function matchSkills({
 
     if (matchedTerms.length > 0) {
       reasons.push(`terms:${matchedTerms.slice(0, 4).join(",")}`);
+    } else if (synonymHits.length > 0) {
+      reasons.push(`syn:${synonymHits.slice(0, 3).join(",")}`);
     }
+
+    const nameMention =
+      !explicitSlash && skill.name.length >= 4 && rawLower.includes(skill.name.toLowerCase());
 
     if (explicitSlash) {
       textScore = Math.max(textScore, 0.98);
       reasons.unshift("explicit:/slash");
-    } else if (skill.name.length >= 4 && rawLower.includes(skill.name.toLowerCase())) {
-      textScore = Math.max(textScore, 0.78);
+    } else if (nameMention) {
+      textScore = Math.max(textScore, 0.82);
       reasons.unshift("name-mention");
     }
 
     // Workspace context bonus (only when text also shows non-trivial relevance)
+    let hasWorkspaceSignal = false;
     if (activeSignals.size > 0 && textScore >= 0.15) {
       const skillTokenSet = new Set([
         ...Object.keys(skill.tokens?.name || {}),
@@ -118,7 +129,8 @@ export function matchSkills({
       ]);
       const overlap = [...activeSignals].filter((sig) => skillTokenSet.has(sig));
       if (overlap.length > 0) {
-        textScore += 0.14;
+        hasWorkspaceSignal = true;
+        textScore += 0.18;
         reasons.push(`workspace:${overlap.slice(0, 2).join(",")}`);
       }
     }
@@ -146,6 +158,10 @@ export function matchSkills({
       path: skill.path,
       description: skill.description,
       explicitSlash,
+      nameMention,
+      hasWorkspaceSignal,
+      directMatchCount: matchedTerms.length,
+      synonymHitCount: synonymHits.length,
       health,
       reasons,
     });
@@ -153,8 +169,10 @@ export function matchSkills({
 
   scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
-  const autoThreshold = config.autoThreshold ?? 0.62;
-  const recommendThreshold = config.recommendThreshold ?? 0.36;
+  const autoThreshold = config.autoThreshold ?? 0.78;
+  const installedAutoThreshold = config.installedAutoThreshold ?? 0.84;
+  const recommendThreshold = config.recommendThreshold ?? 0.5;
+  const minDirectTermsForAuto = config.minDirectTermsForAuto ?? 2;
   const autoMax = config.autoMax ?? 2;
   const recommendMax = config.recommendMax ?? 3;
 
@@ -173,9 +191,22 @@ export function matchSkills({
       continue;
     }
 
-    if (item.score >= autoThreshold && auto.length < autoMax) {
+    const effectiveAutoThreshold =
+      item.kind === "installed" ? installedAutoThreshold : autoThreshold;
+    const meetsAutoTermGate =
+      item.explicitSlash ||
+      item.nameMention ||
+      item.directMatchCount >= minDirectTermsForAuto ||
+      (item.hasWorkspaceSignal && (item.directMatchCount >= 1 || item.synonymHitCount >= 2));
+    const meetsRecGate =
+      item.explicitSlash ||
+      item.nameMention ||
+      item.directMatchCount >= 1 ||
+      item.synonymHitCount >= 2;
+
+    if (item.score >= effectiveAutoThreshold && meetsAutoTermGate && auto.length < autoMax) {
       auto.push(item);
-    } else if (item.score >= recommendThreshold && recommend.length < recommendMax) {
+    } else if (item.score >= recommendThreshold && meetsRecGate && recommend.length < recommendMax) {
       recommend.push(item);
     }
   }

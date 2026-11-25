@@ -15,24 +15,24 @@ const CJK_FILLERS = new Set([
 ]);
 
 const SYNONYMS = [
-  [/小程序|微信|小游戏|miniprogram|wechat/i, ["wechatide", "wechat", "miniprogram", "小程序", "小游戏"]],
-  [/审查|评审|挑刺|盲区|压测|adversarial|review/i, ["interrogate", "review", "adversarial", "盲区"]],
-  [/影响|范围|破坏|风险|波及|blast/i, ["blast-radius", "blast", "radius", "break"]],
-  [/架构|数据结构|模块边界|模块结构|design|architecture/i, ["architect", "design", "types", "module"]],
-  [/注释|删注释|多余注释|comment/i, ["no-comments", "comment"]],
-  [/去ai味|ai腔|套话|润色|精简表达|slop/i, ["unslop", "writing"]],
-  [/性能|基准|提速|慢|卡顿|压测|benchmark|perf/i, ["benchmark-checklist", "perf", "benchmark"]],
-  [/测试|单测|回归测试|先写测试|tdd/i, ["tdd", "test", "regression"]],
-  [/界面|视觉|质感|动效|液态玻璃|卡片|ui|design/i, ["kubai-design-tips", "ui", "design"]],
-  [/文档|readme|rfc|pr描述|commit/i, ["technical-writing", "docs"]],
-  [/对比|多方案|原型|竞品|并行尝试/i, ["arena", "prototype"]],
-  [/bug|排查|复现|根因|修复|debug/i, ["poteto-mode", "bug", "fix"]],
-  [/为什么|动机|历史|当初/i, ["why", "rationale"]],
-  [/怎么工作|原理|走读|讲解|理解/i, ["how", "teach", "walkthrough"]],
-  [/提示词|prompt|需求模糊|重写需求/i, ["sharpen", "reframe"]],
-  [/复盘|总结经验|记住教训|老犯错/i, ["reflect", "correct"]],
-  [/状态机|tla|形式化|并发竞争|race/i, ["statechart", "create-formal-verification-skill", "formal"]],
-  [/生成.*验证|端到端验证|verify/i, ["create-verification-skill", "maintain-verification-skill"]]
+  [/小程序|微信开发者|小游戏|miniprogram|wechatide/i, ["wechatide", "wechat", "miniprogram", "小程序", "小游戏"]],
+  [/对抗审查|对抗评审|查盲区|盲区|挑刺|压测代码|adversarial\s*review|stress\s*test/i, ["interrogate", "review", "adversarial", "盲区"]],
+  [/影响范围|波及范围|会破坏什么|blast\s*radius/i, ["blast-radius", "blast", "radius", "break"]],
+  [/架构设计|数据结构|模块边界|模块结构|system\s*architecture/i, ["architect", "design", "types", "module"]],
+  [/删注释|多余注释|清理注释|no[- ]comments/i, ["no-comments", "comment"]],
+  [/去ai味|ai腔|空洞套话|unslop/i, ["unslop", "writing"]],
+  [/性能基准|基准测试|benchmark|性能回归/i, ["benchmark-checklist", "perf", "benchmark"]],
+  [/先写测试|回归测试|单元测试|单测|测试驱动|\btdd\b/i, ["tdd", "test", "regression"]],
+  [/视觉质感|液态玻璃|滚动卡片|微交互|界面质感|ui\s*polish|design\s*tips|动效质感/i, ["kubai-design-tips", "ui", "design"]],
+  [/技术写作|撰写\s*rfc|pr\s*描述规范|technical[- ]writing/i, ["technical-writing", "docs"]],
+  [/并行对比|多方案对比|竞品原型|arena/i, ["arena", "prototype"]],
+  [/根因排查|先复现|严谨修复|poteto/i, ["poteto-mode", "bug", "fix"]],
+  [/设计动机|当初为什么|历史原因/i, ["why", "rationale"]],
+  [/怎么工作|源码走读|讲透原理/i, ["how", "teach", "walkthrough"]],
+  [/打磨提示词|优化提示词|重写\s*prompt|需求模糊|润色提示词/i, ["sharpen", "reframe"]],
+  [/复盘总结|总结教训|反复犯错/i, ["reflect", "correct"]],
+  [/状态机|tla\+|形式化验证|并发竞争|race\s*condition/i, ["statechart", "create-formal-verification-skill", "formal"]],
+  [/生成.*验证技能|端到端验证技能|create[- ]verification/i, ["create-verification-skill", "maintain-verification-skill"]]
 ];
 
 export function tokenize(text) {
@@ -89,7 +89,7 @@ export function tokenizeQuery(query) {
       for (const exp of expansions) {
         for (const t of tokenize(exp)) {
           if (!terms.has(t)) {
-            terms.set(t, 0.65);
+            terms.set(t, 0.6);
           }
         }
       }

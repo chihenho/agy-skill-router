@@ -60,8 +60,10 @@ function createFixture() {
 
   const config = {
     lang: "zh",
-    autoThreshold: 0.55,
-    recommendThreshold: 0.32,
+    autoThreshold: 0.68,
+    installedAutoThreshold: 0.86,
+    recommendThreshold: 0.45,
+    minDirectTermsForAuto: 2,
     autoMax: 2,
     recommendMax: 3,
     indexTtlSeconds: 300,
@@ -90,6 +92,9 @@ test("tokenizer handles hyphenated English, CJK bigrams, and bilingual synonyms"
 
   const q = tokenizeQuery("帮我看看这次改动的影响范围");
   assert.ok(q.terms.has("blast-radius"));
+
+  const casual = tokenizeQuery("agy-skill-router 咋们本机测试了吗");
+  assert.equal(casual.terms.has("tdd"), false);
 });
 
 test("indexer & health inspection flag broken refs, unadapted harness, and deprecated skills", () => {
@@ -145,13 +150,20 @@ test("matcher handles explicit slash, workspace boost, chit-chat, and blocks dep
     assert.equal(slashHit.auto[0].name, "blast-radius");
 
     const wsHit = matchSkills({
-      query: "运行一下小程序预览构建",
+      query: "运行一下微信小程序预览构建",
       index,
       config: fx.config,
       workspacePaths: [fx.wsDir],
     });
     assert.equal(wsHit.tier, "auto");
     assert.equal(wsHit.auto[0].name, "wechatide-skill");
+
+    const casualHit = matchSkills({
+      query: "agy-skill-router 咋们本机测试了吗",
+      index,
+      config: fx.config,
+    });
+    assert.equal(casualHit.auto.length, 0);
 
     const depHit = matchSkills({
       query: "/legacy-deprecated deploy v1",

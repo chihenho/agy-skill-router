@@ -1,7 +1,9 @@
 {
   "lang": "en",
-  "autoThreshold": 0.62,
-  "recommendThreshold": 0.36,
+  "autoThreshold": 0.78,
+  "installedAutoThreshold": 0.84,
+  "recommendThreshold": 0.5,
+  "minDirectTermsForAuto": 2,
   "autoMax": 2,
   "recommendMax": 3,
   "indexTtlSeconds": 300,

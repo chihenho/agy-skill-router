@@ -63,6 +63,14 @@ function main() {
   if (existsSync(existingConfigPath)) {
     try {
       const existing = JSON.parse(readFileSync(existingConfigPath, "utf8"));
+      // Migrate v0.1.0 permissive defaults while preserving custom overrides
+      if (existing.autoThreshold === 0.62) existing.autoThreshold = baseConfig.autoThreshold;
+      if (existing.recommendThreshold === 0.36 || existing.recommendThreshold === 0.48) {
+        existing.recommendThreshold = baseConfig.recommendThreshold;
+      }
+      if (existing.installedAutoThreshold === 0.86) {
+        existing.installedAutoThreshold = baseConfig.installedAutoThreshold;
+      }
       finalConfig = {
         ...baseConfig,
         ...existing,
@@ -98,7 +106,7 @@ function main() {
       ? {
           name: "agy-skill-router",
           displayName: "技能智能路由 (agy-skill-router)",
-          version: "0.1.0",
+          version: "0.1.1",
           description:
             "低上下文消耗的 Antigravity 技能自主路由、0-token UI 推荐、过时技能体检与极简 MCP 检索插件。",
           author: { name: "chihenho" },
@@ -113,7 +121,7 @@ function main() {
       : {
           name: "agy-skill-router",
           displayName: "Skill Router (agy-skill-router)",
-          version: "0.1.0",
+          version: "0.1.1",
           description:
             "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
           author: { name: "chihenho" },

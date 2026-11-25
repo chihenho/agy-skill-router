@@ -69,7 +69,7 @@ node ~/.gemini/config/plugins/agy-skill-router/src/cli.mjs doctor
 ## Configuration (`router.config.json`)
 
 - `lang`: `"en"` (default) or `"zh"`
-- `autoThreshold` (`0.62`) / `recommendThreshold` (`0.36`)
+- `autoThreshold` (`0.78`) / `installedAutoThreshold` (`0.84`) / `recommendThreshold` (`0.50`) / `minDirectTermsForAuto` (`2`)
 - `staleDays` (`180`), `lowAdoptionMinExposures` (`6`), `lowAdoptionMaxRate` (`0.15`)
 - `sources`: List of local directories, `skills.json` files, or plugin glob paths to index
 - `workspaceSignals`: File markers (e.g. `project.config.json`, `tsconfig.json`, `Cargo.toml`) that boost matching domain skills
