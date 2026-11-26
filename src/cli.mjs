@@ -7,7 +7,7 @@ import { buildPreInvocationResponse } from "./hook-pre-invocation.mjs";
 import { loadOrBuildIndex } from "./indexer.mjs";
 import { matchSkills } from "./matcher.mjs";
 import { getConfigPath, getDataDir, getPluginRoot, hasPostToolHook } from "./paths.mjs";
-import { clearHealthFeedback, loadHealthFeedback, loadStats } from "./state.mjs";
+import { clearHealthFeedback, loadConversations, loadHealthFeedback, loadStats } from "./state.mjs";
 
 function loadConfig() {
   return JSON.parse(readFileSync(getConfigPath(), "utf8"));
@@ -61,12 +61,37 @@ function main() {
 
   if (cmd === "stats") {
     const stats = loadStats(dataDir);
+    const conversations = loadConversations(dataDir);
+    const convCount = Object.keys(conversations.conversations || {}).length;
+    const adoptionTrackingEnabled = Boolean(config.adoptionTracking) || hasPostToolHook();
     const entries = Object.entries(stats.skills || {});
+
+    console.log(`Data dir : ${dataDir}`);
+    console.log(
+      `Tracked  : ${convCount} conversation(s), ${entries.length} skill(s) (adoptionTracking=${adoptionTrackingEnabled})`
+    );
     if (entries.length === 0) {
       console.log("No routing/adoption stats recorded yet.");
       return;
     }
-    entries.sort((a, b) => (b[1].adoptedCount || 0) - (a[1].adoptedCount || 0));
+
+    let totalAuto = 0;
+    let totalRec = 0;
+    let totalAdopted = 0;
+    for (const [, row] of entries) {
+      totalAuto += row.autoCount || 0;
+      totalRec += row.recommendCount || 0;
+      totalAdopted += row.adoptedCount || 0;
+    }
+    console.log(`Totals   : auto=${totalAuto}, rec=${totalRec}, adopted=${totalAdopted}\n`);
+
+    entries.sort(
+      (a, b) =>
+        (b[1].adoptedCount || 0) - (a[1].adoptedCount || 0) ||
+        (b[1].autoCount || 0) + (b[1].recommendCount || 0) - ((a[1].autoCount || 0) + (a[1].recommendCount || 0)) ||
+        (b[1].lastUsedAt || 0) - (a[1].lastUsedAt || 0) ||
+        a[0].localeCompare(b[0])
+    );
     for (const [name, row] of entries) {
       const total = (row.autoCount || 0) + (row.recommendCount || 0);
       console.log(

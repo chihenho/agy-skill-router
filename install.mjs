@@ -10,6 +10,7 @@ import { resolvePluginDataDir } from "./src/paths.mjs";
 import { loadHealthFeedback, loadStats } from "./src/state.mjs";
 
 const REPO_ROOT = dirname(fileURLToPath(import.meta.url));
+const PKG_VERSION = JSON.parse(readFileSync(join(REPO_ROOT, "package.json"), "utf8")).version;
 const DEFAULT_TARGET = join(homedir(), ".gemini", "config", "plugins", "agy-skill-router");
 const DEFAULT_VAULT = join(homedir(), ".gemini", "skill-vault");
 
@@ -133,7 +134,7 @@ function main() {
       ? {
           name: "agy-skill-router",
           displayName: "技能智能路由 (agy-skill-router)",
-          version: "0.2.2",
+          version: PKG_VERSION,
           description:
             "低上下文消耗的 Antigravity 技能自主路由、0-token UI 推荐、过时技能体检与极简 MCP 检索插件。",
           logo: "assets/logo.svg",
@@ -149,7 +150,7 @@ function main() {
       : {
           name: "agy-skill-router",
           displayName: "Skill Router (agy-skill-router)",
-          version: "0.2.2",
+          version: PKG_VERSION,
           description:
             "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
           logo: "assets/logo.svg",

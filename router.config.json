@@ -5,6 +5,7 @@
   "recommendThreshold": 0.62,
   "installedRecommendThreshold": 0.72,
   "minDirectTermsForAuto": 2,
+  "minDirectTermsForRecommend": 2,
   "autoMax": 2,
   "recommendMax": 2,
   "adoptionTracking": false,

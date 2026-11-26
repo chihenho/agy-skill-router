@@ -95,6 +95,23 @@ test("tokenizer handles hyphenated English, CJK bigrams, and bilingual synonyms"
 
   const casual = tokenizeQuery("agy-skill-router 咋们本机测试了吗");
   assert.equal(casual.terms.has("tdd"), false);
+
+  // Strip URLs, file paths, pure numbers / order IDs, CJK particle boundaries, and generic stop-bigrams
+  const noisy = tokenize(
+    "https://example.com/api/wecom/ai/callback /Users/demo/docs/SKILL.md 2609-90004 504 002 是不是工作用户更新方案分析的"
+  );
+  assert.equal(noisy.includes("ai"), false);
+  assert.equal(noisy.includes("md"), false);
+  assert.equal(noisy.includes("users"), false);
+  assert.equal(noisy.includes("504"), false);
+  assert.equal(noisy.includes("002"), false);
+  assert.equal(noisy.includes("2609-90004"), false);
+  assert.equal(noisy.includes("是不"), false);
+  assert.equal(noisy.includes("不是"), false);
+  assert.equal(noisy.includes("工作"), false);
+  assert.equal(noisy.includes("更新"), false);
+  assert.equal(noisy.includes("方案"), false);
+  assert.equal(noisy.includes("分析"), false);
 });
 
 test("indexer & health inspection flag broken refs, unadapted harness, and deprecated skills", () => {
@@ -197,6 +214,49 @@ test("matcher handles explicit slash, workspace boost, chit-chat, and blocks dep
     });
     assert.equal(depHit.auto.length, 0);
     assert.equal(depHit.warnings[0].name, "legacy-deprecated");
+
+    // Boundary-safe nameMention: "architecture" must not match "architect", while exact "architect" does
+    const archRoot = mkdtempSync(join(tmpdir(), "agy-router-arch-"));
+    try {
+      mkdirSync(join(archRoot, "vault", "architect"), { recursive: true });
+      writeFileSync(
+        join(archRoot, "vault", "architect", "SKILL.md"),
+        `---\nname: architect\ndescription: "Design data structures, types, and module boundaries."\n---\n# Architect\n`,
+        "utf8"
+      );
+      const archCfg = {
+        ...fx.config,
+        recommendThreshold: 0.62,
+        minDirectTermsForRecommend: 2,
+        sources: [{ path: join(archRoot, "vault"), kind: "vault" }],
+      };
+      const archIdx = loadOrBuildIndex({ config: archCfg, dataDir: archRoot, force: true });
+
+      const falseBoundary = matchSkills({
+        query: "review ARCHITECTURE.md",
+        index: archIdx,
+        config: archCfg,
+      });
+      assert.equal(falseBoundary.tier, "silent");
+
+      const exactName = matchSkills({
+        query: "use architect now",
+        index: archIdx,
+        config: archCfg,
+      });
+      assert.equal(exactName.all[0].name, "architect");
+      assert.equal(exactName.all[0].nameMention, true);
+
+      // Single direct term cannot trigger recommend when minDirectTermsForRecommend=2
+      const singleTerm = matchSkills({
+        query: "check module",
+        index: archIdx,
+        config: archCfg,
+      });
+      assert.equal(singleTerm.recommend.length, 0);
+    } finally {
+      rmSync(archRoot, { recursive: true, force: true });
+    }
   } finally {
     rmSync(fx.root, { recursive: true, force: true });
   }
@@ -422,6 +482,41 @@ test("distribution manifests and bin CLI wrapper are valid and portable", () => 
     });
     assert.equal(hugeRes.status, 0);
     assert.deepEqual(JSON.parse(hugeRes.stdout), {});
+  } finally {
+    rmSync(fx.root, { recursive: true, force: true });
+  }
+});
+
+test("cli.mjs stats prints summary header and sorts by exposure when adoptedCount is 0", () => {
+  const fx = createFixture();
+  try {
+    loadOrBuildIndex({ config: fx.config, dataDir: fx.dataDir, workspacePaths: [fx.wsDir], force: true });
+    writeFileSync(
+      join(fx.dataDir, "stats.json"),
+      JSON.stringify(
+        {
+          skills: {
+            "blast-radius": { autoCount: 0, recommendCount: 2, adoptedCount: 0, lastUsedAt: 1000 },
+            "wechatide-skill": { autoCount: 1, recommendCount: 5, adoptedCount: 0, lastUsedAt: 2000 },
+          },
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+    const res = spawnSync("node", [join(REPO_ROOT, "src", "cli.mjs"), "stats"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        AGY_ROUTER_ROOT: fx.pluginRoot,
+        AGY_ROUTER_DATA: fx.dataDir,
+      },
+    });
+    assert.equal(res.status, 0);
+    assert.ok(res.stdout.includes(`Data dir : ${fx.dataDir}`));
+    assert.ok(res.stdout.includes("Totals   : auto=1, rec=7, adopted=0"));
+    assert.ok(res.stdout.indexOf("wechatide-skill") < res.stdout.indexOf("blast-radius"));
   } finally {
     rmSync(fx.root, { recursive: true, force: true });
   }

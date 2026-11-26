@@ -1,7 +1,7 @@
 {
   "name": "agy-skill-router",
   "displayName": "Skill Router (agy-skill-router)",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
   "logo": "assets/logo.svg",
   "author": {

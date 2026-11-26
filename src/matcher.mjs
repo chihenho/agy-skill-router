@@ -39,6 +39,10 @@ export function detectWorkspaceSignals(workspacePaths = [], signalMap = {}) {
   return active;
 }
 
+function escapeRegExp(str) {
+  return String(str).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function bm25TermScore(tf, docFreq, totalDocs, docLen, avgDocLen, k1 = 1.2, b = 0.6) {
   if (!tf || tf <= 0) return 0;
   const idf = Math.log(1 + (totalDocs - docFreq + 0.5) / (docFreq + 0.5));
@@ -112,8 +116,9 @@ export function matchSkills({
       reasons.push(`syn:${synonymHits.slice(0, 3).join(",")}`);
     }
 
-    const nameMention =
-      !explicitSlash && skill.name.length >= 4 && rawLower.includes(skill.name.toLowerCase());
+    const nameLower = skill.name.toLowerCase();
+    const nameRe = new RegExp(`(?<![a-z0-9_-])${escapeRegExp(nameLower)}(?![a-z0-9_-])`);
+    const nameMention = !explicitSlash && skill.name.length >= 4 && nameRe.test(rawLower);
 
     if (explicitSlash) {
       textScore = Math.max(textScore, 0.98);
@@ -183,6 +188,7 @@ export function matchSkills({
   const recommendThreshold = config.recommendThreshold ?? 0.62;
   const installedRecommendThreshold = config.installedRecommendThreshold ?? 0.72;
   const minDirectTermsForAuto = config.minDirectTermsForAuto ?? 2;
+  const minDirectTermsForRecommend = config.minDirectTermsForRecommend ?? 2;
   const autoMax = config.autoMax ?? 2;
   const recommendMax = config.recommendMax ?? 2;
 
@@ -213,8 +219,9 @@ export function matchSkills({
     const meetsRecGate =
       item.explicitSlash ||
       item.nameMention ||
-      item.directMatchCount >= 1 ||
-      item.synonymHitCount >= 2;
+      item.directMatchCount >= minDirectTermsForRecommend ||
+      item.synonymHitCount >= 2 ||
+      (item.hasWorkspaceSignal && (item.directMatchCount >= 1 || item.synonymHitCount >= 1));
     const notYetRecommended = item.explicitSlash || !excludeRecommendSet.has(item.name);
 
     if (item.score >= effectiveAutoThreshold && meetsAutoTermGate && auto.length < autoMax) {

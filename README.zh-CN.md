@@ -20,10 +20,10 @@
    - **高置信度（自动触发）**：注入 ~60 token 的极简指针（技能名 + `SKILL.md` 绝对路径），让 Agent 自主 `read_file` 后执行。
    - **中置信度（0-token 推荐！）**：利用 Antigravity 原生 `metadata.user_markdown` 并把 `systemMessage` 置空 `""`——只在聊天界面内嵌展示推荐卡片给用户看，**模型 0 token 消耗**！
    - **低置信度 / 寒暄**（如“好的”、“谢谢”、“ok”）：直接返回 `{}`，零打扰、零上下文消耗。
-   - **会话级去重**：同一会话同一句话只路由一次，已注入过的技能不重复注入。
+   - **会话级去重**：同一会话同一句话只路由一次，已注入或已推荐过的技能在同一会话内不再重复打扰。
 3. **过时 / 失效 / 不建议使用技能检测**：
    - **静态体检（`audit`）**：自动识别 `deprecated` 标记、失效的本地相对引用链接、未适配的 Cursor/Claude 专属指令（如 `AskQuestion`、`~/.cursor/rules/`）、过短描述以及超期未更新（`staleDays`）。
-   - **运行期自学习与反馈**：`PostToolUse`（监听 `read_file`）统计真实采纳率并自动标记读取失败的 `SKILL.md`；Agent 在长任务中途发现某个 Skill 过时或失效时，可调用 `report_skill_issue` 记录原因，后续对话会自动标出 `⚠️ 不建议使用` 并阻止盲目自动调用。
+   - **运行期反馈**：默认关闭 `PostToolUse` 钩子以保证并发 `read_file` 零额外延迟（同时避免未开启采纳追踪时误报低采纳降权）；如需开启 `read_file` 采纳率统计可在安装时加 `--with-post-hook`。Agent 在长任务中途发现某个 Skill 过时或失效时，可调用 `report_skill_issue` 记录原因，后续对话会自动标出 `⚠️ 不建议使用` 并阻止盲目自动调用。
 4. **极简 Stdio MCP（仅 3 个工具）**：提供 `search_skills`、`list_skill_domains`、`report_skill_issue`，让 Agent 在复杂任务做到一半时也能自主检索合适技能。
 
 ---
@@ -88,6 +88,13 @@ node ~/.gemini/config/plugins/agy-skill-router/src/cli.mjs doctor
 1. 把低频或大体积 Skill 文件夹从 `~/.gemini/config/skills/` 挪到 `~/.gemini/skill-vault/`；
 2. Antigravity 不会再每轮把它们的描述塞进系统提示词；
 3. 当你的提问或当前项目环境命中它们时，`agy-skill-router` 会通过 Hook 自动路由或在 UI 里 0-token 推荐给你。
+
+## 配置说明（`router.config.json`）
+
+- `lang`：`"en"`（默认）或 `"zh"`
+- `autoThreshold`（`0.78`）/ `installedAutoThreshold`（`0.84`）/ `recommendThreshold`（`0.62`）/ `installedRecommendThreshold`（`0.72`）/ `recommendMax`（`2`）/ `minDirectTermsForAuto`（`2`）/ `minDirectTermsForRecommend`（`2`）
+- `staleDays`（`180`）、`lowAdoptionMinExposures`（`6`）、`lowAdoptionMaxRate`（`0.15`）、`adoptionTracking`（`false`，加 `--with-post-hook` 时启用）
+- 默认优先复用 `~/.gemini/antigravity/plugin_data/agy-skill-router` 作为统一运行数据目录，保证 Hook、MCP 与 CLI `stats`/`audit` 数据一致
 
 ## 协议
 
