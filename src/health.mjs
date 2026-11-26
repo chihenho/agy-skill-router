@@ -82,7 +82,13 @@ export function inspectSkillHealth({
   return { status, issues };
 }
 
-export function evaluateRuntimeHealth({ skill, stats, feedback, config }) {
+export function evaluateRuntimeHealth({
+  skill,
+  stats,
+  feedback,
+  config,
+  adoptionTrackingEnabled = Boolean(config?.adoptionTracking),
+}) {
   const issues = [...(skill.health?.issues || [])];
   const reported = feedback?.skills?.[skill.name];
 
@@ -101,18 +107,20 @@ export function evaluateRuntimeHealth({ skill, stats, feedback, config }) {
     });
   }
 
-  const row = stats?.skills?.[skill.name];
-  const minExposures = config?.lowAdoptionMinExposures ?? 6;
-  const maxRate = config?.lowAdoptionMaxRate ?? 0.15;
-  if (row) {
-    const total = (row.autoCount || 0) + (row.recommendCount || 0);
-    const rate = total > 0 ? (row.adoptedCount || 0) / total : 1;
-    if (total >= minExposures && rate <= maxRate) {
-      issues.push({
-        code: "low_adoption_noise",
-        severity: "warning",
-        detail: `Low adoption (${row.adoptedCount || 0}/${total} times read); consider refining description or archiving.`,
-      });
+  if (adoptionTrackingEnabled) {
+    const row = stats?.skills?.[skill.name];
+    const minExposures = config?.lowAdoptionMinExposures ?? 6;
+    const maxRate = config?.lowAdoptionMaxRate ?? 0.15;
+    if (row) {
+      const total = (row.autoCount || 0) + (row.recommendCount || 0);
+      const rate = total > 0 ? (row.adoptedCount || 0) / total : 1;
+      if (total >= minExposures && rate <= maxRate) {
+        issues.push({
+          code: "low_adoption_noise",
+          severity: "warning",
+          detail: `Low adoption (${row.adoptedCount || 0}/${total} times read); consider refining description or archiving.`,
+        });
+      }
     }
   }
 

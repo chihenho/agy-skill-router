@@ -1,6 +1,6 @@
 {
   "name": "agy-skill-router",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Low-context autonomous skill router, 0-token UI recommender, staleness auditor, and minimal MCP discovery server for Antigravity.",
   "type": "module",
   "private": false,

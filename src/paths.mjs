@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,14 +27,37 @@ export function getPluginRoot() {
   return REPO_OR_PLUGIN_ROOT;
 }
 
+function normCase(p) {
+  return resolve(p).replace(/\\/g, "/").toLowerCase();
+}
+
+export function resolvePluginDataDir(pluginRoot = getPluginRoot()) {
+  const defaultPluginDir = join(homedir(), ".gemini", "config", "plugins", "agy-skill-router");
+  const agyPluginData = join(homedir(), ".gemini", "antigravity", "plugin_data", "agy-skill-router");
+  if (normCase(pluginRoot) === normCase(defaultPluginDir) && existsSync(agyPluginData)) {
+    return agyPluginData;
+  }
+  return join(pluginRoot, ".data");
+}
+
 export function getDataDir() {
   const dir = process.env.PLUGIN_DATA
     ? resolve(process.env.PLUGIN_DATA)
     : process.env.AGY_ROUTER_DATA
       ? resolve(process.env.AGY_ROUTER_DATA)
-      : join(getPluginRoot(), ".data");
+      : resolvePluginDataDir(getPluginRoot());
   mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+export function hasPostToolHook(pluginRoot = getPluginRoot()) {
+  try {
+    const hooksPath = join(pluginRoot, "hooks.json");
+    if (!existsSync(hooksPath)) return false;
+    return readFileSync(hooksPath, "utf8").includes('"PostToolUse"');
+  } catch {
+    return false;
+  }
 }
 
 export function getConfigPath() {

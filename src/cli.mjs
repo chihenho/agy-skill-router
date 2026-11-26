@@ -6,7 +6,7 @@ import { evaluateRuntimeHealth } from "./health.mjs";
 import { buildPreInvocationResponse } from "./hook-pre-invocation.mjs";
 import { loadOrBuildIndex } from "./indexer.mjs";
 import { matchSkills } from "./matcher.mjs";
-import { getConfigPath, getDataDir, getPluginRoot } from "./paths.mjs";
+import { getConfigPath, getDataDir, getPluginRoot, hasPostToolHook } from "./paths.mjs";
 import { clearHealthFeedback, loadHealthFeedback, loadStats } from "./state.mjs";
 
 function loadConfig() {
@@ -80,10 +80,17 @@ function main() {
     const index = loadOrBuildIndex({ config, dataDir, force: true });
     const stats = loadStats(dataDir);
     const feedback = loadHealthFeedback(dataDir);
+    const adoptionTrackingEnabled = Boolean(config.adoptionTracking) || hasPostToolHook();
     const flagged = [];
 
     for (const skill of index.skills) {
-      const health = evaluateRuntimeHealth({ skill, stats, feedback, config });
+      const health = evaluateRuntimeHealth({
+        skill,
+        stats,
+        feedback,
+        config,
+        adoptionTrackingEnabled,
+      });
       if (health.issues.length > 0) {
         flagged.push({ skill, health });
       }
@@ -136,7 +143,16 @@ function main() {
     const index = loadOrBuildIndex({ config, dataDir, workspacePaths: [cwd] });
     const stats = loadStats(dataDir);
     const feedback = loadHealthFeedback(dataDir);
-    const res = matchSkills({ query, index, config, stats, feedback, workspacePaths: [cwd] });
+    const adoptionTrackingEnabled = Boolean(config.adoptionTracking) || hasPostToolHook();
+    const res = matchSkills({
+      query,
+      index,
+      config,
+      stats,
+      feedback,
+      workspacePaths: [cwd],
+      adoptionTrackingEnabled,
+    });
     const hookOut = buildPreInvocationResponse(
       { lastUserInput: query, workspacePaths: [cwd], cwd },
       { config, dataDir }
@@ -172,9 +188,18 @@ function main() {
     const index = loadOrBuildIndex({ config, dataDir, force: true });
     const stats = loadStats(dataDir);
     const feedback = loadHealthFeedback(dataDir);
-    matchSkills({ query: "review my changes for risks", index, config, stats, feedback });
+    const adoptionTrackingEnabled = Boolean(config.adoptionTracking) || hasPostToolHook();
+    matchSkills({
+      query: "review my changes for risks",
+      index,
+      config,
+      stats,
+      feedback,
+      adoptionTrackingEnabled,
+    });
     const ms = (performance.now() - t0).toFixed(2);
-    console.log(`Index + match latency: ${ms} ms (${index.totalDocs} skills, lang=${config.lang})`);
+    console.log(`Data dir : ${dataDir}`);
+    console.log(`Index + match latency: ${ms} ms (${index.totalDocs} skills, lang=${config.lang}, adoptionTracking=${adoptionTrackingEnabled})`);
     return;
   }
 

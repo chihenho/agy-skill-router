@@ -4,9 +4,10 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadOrBuildIndex } from "./src/indexer.mjs";
-import { loadHealthFeedback, loadStats } from "./src/state.mjs";
 import { evaluateRuntimeHealth } from "./src/health.mjs";
+import { loadOrBuildIndex } from "./src/indexer.mjs";
+import { resolvePluginDataDir } from "./src/paths.mjs";
+import { loadHealthFeedback, loadStats } from "./src/state.mjs";
 
 const REPO_ROOT = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_TARGET = join(homedir(), ".gemini", "config", "plugins", "agy-skill-router");
@@ -67,13 +68,20 @@ function main() {
   if (existsSync(existingConfigPath)) {
     try {
       const existing = JSON.parse(readFileSync(existingConfigPath, "utf8"));
-      // Migrate v0.1.0 permissive defaults while preserving custom overrides
+      // Migrate older permissive defaults while preserving custom overrides
       if (existing.autoThreshold === 0.62) existing.autoThreshold = baseConfig.autoThreshold;
-      if (existing.recommendThreshold === 0.36 || existing.recommendThreshold === 0.48) {
+      if (
+        existing.recommendThreshold === 0.36 ||
+        existing.recommendThreshold === 0.48 ||
+        existing.recommendThreshold === 0.5
+      ) {
         existing.recommendThreshold = baseConfig.recommendThreshold;
       }
       if (existing.installedAutoThreshold === 0.86) {
         existing.installedAutoThreshold = baseConfig.installedAutoThreshold;
+      }
+      if (existing.recommendMax === 3) {
+        existing.recommendMax = baseConfig.recommendMax;
       }
       const mergedExclude = new Set([
         ...(Array.isArray(existing.excludeSkills) ? existing.excludeSkills : []),
@@ -82,6 +90,7 @@ function main() {
       finalConfig = {
         ...baseConfig,
         ...existing,
+        adoptionTracking: Boolean(opts.withPostHook),
         excludeSkills: [...mergedExclude],
         sources: Array.isArray(existing.sources) ? existing.sources : baseConfig.sources,
       };
@@ -92,6 +101,7 @@ function main() {
 
   const lang = opts.lang || finalConfig.lang || "en";
   finalConfig.lang = lang;
+  finalConfig.adoptionTracking = Boolean(opts.withPostHook);
 
   mkdirSync(target, { recursive: true });
   rmSync(join(target, "src"), { recursive: true, force: true });
@@ -123,7 +133,7 @@ function main() {
       ? {
           name: "agy-skill-router",
           displayName: "技能智能路由 (agy-skill-router)",
-          version: "0.2.1",
+          version: "0.2.2",
           description:
             "低上下文消耗的 Antigravity 技能自主路由、0-token UI 推荐、过时技能体检与极简 MCP 检索插件。",
           logo: "assets/logo.svg",
@@ -139,7 +149,7 @@ function main() {
       : {
           name: "agy-skill-router",
           displayName: "Skill Router (agy-skill-router)",
-          version: "0.2.1",
+          version: "0.2.2",
           description:
             "Low-context autonomous skill routing, 0-token UI recommendations, skill health/staleness auditing, and minimal MCP discovery for Antigravity.",
           logo: "assets/logo.svg",
@@ -221,8 +231,8 @@ function main() {
     );
   }
 
-  // Build initial index
-  const dataDir = join(target, ".data");
+  // Build initial index into unified dataDir
+  const dataDir = resolvePluginDataDir(target);
   mkdirSync(dataDir, { recursive: true });
   const index = loadOrBuildIndex({ config: finalConfig, dataDir, force: true });
   const stats = loadStats(dataDir);
@@ -232,7 +242,13 @@ function main() {
   let warnings = 0;
   for (const s of index.skills) {
     byKind[s.kind] = (byKind[s.kind] || 0) + 1;
-    const h = evaluateRuntimeHealth({ skill: s, stats, feedback, config: finalConfig });
+    const h = evaluateRuntimeHealth({
+      skill: s,
+      stats,
+      feedback,
+      config: finalConfig,
+      adoptionTrackingEnabled: Boolean(opts.withPostHook),
+    });
     if (h.issues.length > 0) warnings += 1;
   }
 

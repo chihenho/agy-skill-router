@@ -54,12 +54,15 @@ export function matchSkills({
   feedback = {},
   workspacePaths = [],
   excludeNames = [],
+  excludeRecommendNames = [],
   includeInstalled = true,
   kindFilter = "all",
+  adoptionTrackingEnabled = Boolean(config?.adoptionTracking),
 }) {
   const { terms, rawLower, slashMentions } = tokenizeQuery(query);
   const slashSet = new Set(slashMentions);
   const excludeSet = new Set(excludeNames || []);
+  const excludeRecommendSet = new Set(excludeRecommendNames || []);
   const activeSignals = detectWorkspaceSignals(workspacePaths, config.workspaceSignals);
 
   const totalDocs = Math.max(index?.totalDocs || 1, 1);
@@ -139,8 +142,14 @@ export function matchSkills({
       textScore += 0.04;
     }
 
-    const adoptionMult = getAdoptionMultiplier(stats, skill.name);
-    const health = evaluateRuntimeHealth({ skill, stats, feedback, config });
+    const adoptionMult = getAdoptionMultiplier(stats, skill.name, adoptionTrackingEnabled);
+    const health = evaluateRuntimeHealth({
+      skill,
+      stats,
+      feedback,
+      config,
+      adoptionTrackingEnabled,
+    });
 
     const preHealthScore = textScore * adoptionMult;
     const finalScore = explicitSlash
@@ -171,10 +180,11 @@ export function matchSkills({
 
   const autoThreshold = config.autoThreshold ?? 0.78;
   const installedAutoThreshold = config.installedAutoThreshold ?? 0.84;
-  const recommendThreshold = config.recommendThreshold ?? 0.5;
+  const recommendThreshold = config.recommendThreshold ?? 0.62;
+  const installedRecommendThreshold = config.installedRecommendThreshold ?? 0.72;
   const minDirectTermsForAuto = config.minDirectTermsForAuto ?? 2;
   const autoMax = config.autoMax ?? 2;
-  const recommendMax = config.recommendMax ?? 3;
+  const recommendMax = config.recommendMax ?? 2;
 
   const auto = [];
   const recommend = [];
@@ -193,6 +203,8 @@ export function matchSkills({
 
     const effectiveAutoThreshold =
       item.kind === "installed" ? installedAutoThreshold : autoThreshold;
+    const effectiveRecThreshold =
+      item.kind === "installed" ? installedRecommendThreshold : recommendThreshold;
     const meetsAutoTermGate =
       item.explicitSlash ||
       item.nameMention ||
@@ -203,10 +215,16 @@ export function matchSkills({
       item.nameMention ||
       item.directMatchCount >= 1 ||
       item.synonymHitCount >= 2;
+    const notYetRecommended = item.explicitSlash || !excludeRecommendSet.has(item.name);
 
     if (item.score >= effectiveAutoThreshold && meetsAutoTermGate && auto.length < autoMax) {
       auto.push(item);
-    } else if (item.score >= recommendThreshold && meetsRecGate && recommend.length < recommendMax) {
+    } else if (
+      notYetRecommended &&
+      item.score >= effectiveRecThreshold &&
+      meetsRecGate &&
+      recommend.length < recommendMax
+    ) {
       recommend.push(item);
     }
   }

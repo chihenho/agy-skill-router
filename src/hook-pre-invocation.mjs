@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { loadOrBuildIndex } from "./indexer.mjs";
 import { isChitChat, matchSkills } from "./matcher.mjs";
-import { getConfigPath, getDataDir } from "./paths.mjs";
+import { getConfigPath, getDataDir, hasPostToolHook } from "./paths.mjs";
 import {
   getConversationState,
   hashInput,
@@ -74,8 +74,10 @@ export function buildPreInvocationResponse(payload, { config, dataDir, forceInde
 
   const convState = getConversationState(dataDir, conversationId);
   const excludeNames = convState?.injectedSkills || [];
+  const excludeRecommendNames = convState?.recommendedSkills || [];
   const stats = loadStats(dataDir);
   const feedback = loadHealthFeedback(dataDir);
+  const adoptionTrackingEnabled = Boolean(config.adoptionTracking) || hasPostToolHook();
 
   const result = matchSkills({
     query: input,
@@ -85,7 +87,9 @@ export function buildPreInvocationResponse(payload, { config, dataDir, forceInde
     feedback,
     workspacePaths,
     excludeNames,
+    excludeRecommendNames,
     includeInstalled: config.includeInstalledSkills !== false,
+    adoptionTrackingEnabled,
   });
 
   const lang = config.lang === "zh" ? "zh" : "en";

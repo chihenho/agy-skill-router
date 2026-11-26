@@ -122,7 +122,8 @@ export function recordAdoption(dataDir, skillName) {
   saveStats(dataDir, stats);
 }
 
-export function getAdoptionMultiplier(stats, skillName) {
+export function getAdoptionMultiplier(stats, skillName, adoptionTrackingEnabled = false) {
+  if (!adoptionTrackingEnabled) return 1.0;
   const row = stats?.skills?.[skillName];
   if (!row) return 1.0;
   const total = (row.autoCount || 0) + (row.recommendCount || 0);

@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { inspectSkillHealth } from "../src/health.mjs";
+import { evaluateRuntimeHealth, inspectSkillHealth } from "../src/health.mjs";
 import { loadOrBuildIndex } from "../src/indexer.mjs";
 import { matchSkills } from "../src/matcher.mjs";
 import { tokenize, tokenizeQuery } from "../src/tokenizer.mjs";
@@ -126,6 +126,31 @@ test("indexer & health inspection flag broken refs, unadapted harness, and depre
       config: fx.config,
     });
     assert.equal(healthyCheck.status, "healthy");
+
+    // low_adoption_noise should only fire when adoptionTrackingEnabled is true
+    const dummySkill = index.skills.find((s) => s.name === "blast-radius");
+    const dummyStats = {
+      skills: { "blast-radius": { autoCount: 0, recommendCount: 10, adoptedCount: 0 } },
+    };
+    const offHealth = evaluateRuntimeHealth({
+      skill: dummySkill,
+      stats: dummyStats,
+      feedback: {},
+      config: fx.config,
+      adoptionTrackingEnabled: false,
+    });
+    assert.equal(offHealth.status, "healthy");
+    assert.equal(offHealth.scoreMultiplier, 1.0);
+
+    const onHealth = evaluateRuntimeHealth({
+      skill: dummySkill,
+      stats: dummyStats,
+      feedback: {},
+      config: fx.config,
+      adoptionTrackingEnabled: true,
+    });
+    assert.equal(onHealth.status, "warning");
+    assert.ok(onHealth.issues.some((i) => i.code === "low_adoption_noise"));
   } finally {
     rmSync(fx.root, { recursive: true, force: true });
   }
@@ -234,6 +259,15 @@ test("PreInvocation & PostToolUse hooks handle auto, dedup, 0-token recommend, c
     });
     assert.equal(recRes.injectSteps[0].systemMessage.systemMessage, "");
     assert.ok(recRes.injectSteps[0].systemMessage.metadata.user_markdown.includes("repo-release"));
+
+    // 4b. Different query in same conversation does NOT re-recommend repo-release
+    const recDupRes = runPre({
+      conversationId: "c2",
+      lastUserInput: "verify package checksums for release tag",
+      workspacePaths: [fx.wsDir],
+    });
+    const recDupMd = recDupRes?.injectSteps?.[0]?.systemMessage?.metadata?.user_markdown || "";
+    assert.equal(recDupMd.includes("repo-release"), false);
 
     // 5. PostToolUse records adoption on successful read_file
     const postRes = spawnSync("node", [join(REPO_ROOT, "src", "hook-post-tool.mjs")], {

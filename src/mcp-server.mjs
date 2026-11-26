@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { loadOrBuildIndex } from "./indexer.mjs";
 import { matchSkills } from "./matcher.mjs";
-import { getConfigPath, getDataDir } from "./paths.mjs";
+import { getConfigPath, getDataDir, hasPostToolHook } from "./paths.mjs";
 import { loadHealthFeedback, loadStats, recordHealthFeedback } from "./state.mjs";
 
 const PROTOCOL_VERSION = "2024-11-05";
@@ -113,6 +113,7 @@ function handleToolCall(name, args = {}) {
       feedback,
       workspacePaths,
       kindFilter: args.kind || "all",
+      adoptionTrackingEnabled: Boolean(config.adoptionTracking) || hasPostToolHook(),
     });
     const hits = res.all.slice(0, limit);
     if (hits.length === 0) {
@@ -199,7 +200,7 @@ function handleMessage(msg) {
         result: {
           protocolVersion: PROTOCOL_VERSION,
           capabilities: { tools: {} },
-          serverInfo: { name: "agy-skill-router", version: "0.2.1" },
+          serverInfo: { name: "agy-skill-router", version: "0.2.2" },
         },
       };
     }
